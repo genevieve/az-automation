@@ -13,7 +13,7 @@ type args struct {
 	Account              string `required:"true" short:"a" long:"account"                description:"Your account id or name. Use 'az account list' to see your accounts."`
 	DisplayName          string `required:"true" short:"d" long:"display-name"           description:"Display name for application. Must be unique."`
 	IdentifierUri        string `required:"true" short:"i" long:"identifier-uri"         description:"Must be unique."`
-	CredentialOutputFile string `required:"true" short:"c" long:"credential-output-file" description:"Must be unique." default:"creds"`
+	CredentialOutputFile string `required:"true" short:"c" long:"credential-output-file" description:"Must be unique."                                                      default:"creds"`
 }
 
 func main() {
@@ -82,11 +82,4 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Println("Wrote credentials to output file.")
-
-	//STEPS
-	//Login to your subscription using an account that has permissions to add users and apps to the Azure AD.
-	//Create an application which will be given the service principal.
-	//List service principals that are already in your Azure AD.
-	//Create service principal for the application that you created above using its ApplicationId.
-
 }

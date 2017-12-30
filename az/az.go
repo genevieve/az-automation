@@ -181,6 +181,7 @@ func (a *Az) AssignContributorRole() error {
 		"role", "assignment", "create",
 		"--role", "Contributor",
 		"--assignee", a.creds.ClientId,
+		"--scope", fmt.Sprintf("/subscriptions/%s", a.creds.SubscriptionId),
 	}
 
 	output, err := a.cli.Execute(args)
