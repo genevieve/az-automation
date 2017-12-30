@@ -57,7 +57,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Confirmed --display-name was not already taken.")
+	log.Println("Confirmed application name is not already taken.")
 
 	err = cli.CreateApplication()
 	if err != nil {
@@ -69,7 +69,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Created serice principal.")
+	log.Println("Created service principal.")
 
 	err = cli.AssignContributorRole()
 	if err != nil {
