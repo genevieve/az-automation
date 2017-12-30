@@ -202,7 +202,7 @@ client_secret = %s
 		a.creds.ClientId,
 		a.creds.ClientSecret)
 
-	err := ioutil.WriteFile(a.credentialOutputFile, []byte(creds), os.ModePerm)
+	err := ioutil.WriteFile(a.credentialOutputFile, []byte(creds), 0600)
 	if err != nil {
 		return errors.New(fmt.Sprintf("Writing credentials to output file: %s", err))
 	}

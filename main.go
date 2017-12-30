@@ -5,15 +5,15 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/genevievelesperance/az-automation/az"
 	flags "github.com/jessevdk/go-flags"
-	"github.com/pivotal-cf/terraforming-azure/create-service-account/az"
 )
 
 type args struct {
 	Account              string `required:"true" short:"a" long:"account"                description:"Your account id or name. Use 'az account list' to see your accounts."`
 	DisplayName          string `required:"true" short:"d" long:"display-name"           description:"Display name for application. Must be unique."`
 	IdentifierUri        string `required:"true" short:"i" long:"identifier-uri"         description:"Must be unique."`
-	CredentialOutputFile string `required:"true" short:"c" long:"credential-output-file" description:"Must be unique."`
+	CredentialOutputFile string `required:"true" short:"c" long:"credential-output-file" description:"Must be unique." default:"creds"`
 }
 
 func main() {
