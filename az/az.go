@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"regexp"
 
 	"github.com/google/uuid"
@@ -21,6 +20,10 @@ type Account struct {
 type Application struct {
 	DisplayName string `json:"displayName"`
 	AppId       string `json:"appId"`
+}
+
+type ServicePrincipal struct {
+	AppId string `json:"appId"`
 }
 
 type Az struct {
@@ -93,7 +96,7 @@ func (a *Az) LoggedIn() error {
 	return nil
 }
 
-func (a Az) GetSubscriptionAndTenantId() error {
+func (a *Az) GetSubscriptionAndTenantId() error {
 	output, err := a.cli.Execute([]string{"account", "show", "-s", a.account})
 	if err != nil {
 		return err
@@ -111,10 +114,13 @@ func (a Az) GetSubscriptionAndTenantId() error {
 	return nil
 }
 
-func (a Az) AppExists() error {
-	output, err := a.cli.Execute([]string{"ad", "app", "list"})
+func (a *Az) AppExists() error {
+	output, err := a.cli.Execute([]string{
+		"ad", "app", "list",
+		"--display-name", a.displayName,
+	})
 	if err != nil {
-		return errors.New(fmt.Sprintf("Running `az ad app show -s %s: %s", a.displayName, err))
+		return errors.New(fmt.Sprintf("Running `az ad app list`: %s", err))
 	}
 
 	applications := []Application{}
@@ -123,10 +129,8 @@ func (a Az) AppExists() error {
 		return errors.New(fmt.Sprintf("Unmarshalling applications json: %s", err))
 	}
 
-	for _, app := range applications {
-		if app.DisplayName == a.displayName {
-			return errors.New(fmt.Sprintf("The %s application already exists with id %s", app.DisplayName, app.AppId))
-		}
+	if len(applications) > 0 {
+		return errors.New(fmt.Sprintf("The --display name %s is taken by application with id %s.", a.displayName, applications[0].AppId))
 	}
 
 	return nil
@@ -158,19 +162,15 @@ func (a *Az) CreateApplication() error {
 	return nil
 }
 
-type ServicePrincipal struct {
-	AppId string `json:"appId"`
-}
-
 func (a *Az) CreateServicePrincipal() error {
-	createArgs := []string{
+	args := []string{
 		"ad", "sp", "create",
 		"--id", a.creds.ClientId,
 	}
 
-	output, err := a.cli.Execute(createArgs)
+	output, err := a.cli.Execute(args)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Running %+v: %s", createArgs, output))
+		return errors.New(fmt.Sprintf("Running %+v: %s", args, output))
 	}
 
 	return nil
