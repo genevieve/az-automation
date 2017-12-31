@@ -14,7 +14,7 @@ type args struct {
 	Account              string `required:"true" short:"a" long:"account"                description:"Your account id or name. Use 'az account list' to see your accounts."`
 	DisplayName          string `required:"true" short:"d" long:"display-name"           description:"Display name for application. Must be unique."`
 	IdentifierUri        string `required:"true" short:"i" long:"identifier-uri"         description:"Must be unique."`
-	CredentialOutputFile string `required:"true" short:"c" long:"credential-output-file" description:"Must be unique."                                                      default:"creds"`
+	CredentialOutputFile string `required:"true" short:"c" long:"credential-output-file" description:"Must be unique."                                                      default:"creds.tfvars"`
 }
 
 func main() {
@@ -33,7 +33,6 @@ func main() {
 	}
 
 	binary := az.NewCLI(path)
-
 	cli := az.NewAz(binary, a.Account, a.DisplayName, a.IdentifierUri, a.CredentialOutputFile)
 
 	err = cli.ValidVersion()
