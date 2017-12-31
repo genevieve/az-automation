@@ -27,12 +27,8 @@ type ServicePrincipal struct {
 }
 
 type Az struct {
-	cli                  cli
-	logger               logger
-	account              string
-	displayName          string
-	identifierUri        string
-	credentialOutputFile string
+	cli    cli
+	logger logger
 }
 
 type cli interface {
@@ -43,14 +39,10 @@ type logger interface {
 	Println(message string)
 }
 
-func NewAz(cli cli, logger logger, account, displayName, identifierUri, credentialOutputFile string) *Az {
+func NewAz(cli cli, logger logger) *Az {
 	return &Az{
-		cli:                  cli,
-		logger:               logger,
-		account:              account,
-		displayName:          displayName,
-		identifierUri:        identifierUri,
-		credentialOutputFile: credentialOutputFile,
+		cli:    cli,
+		logger: logger,
 	}
 }
 
@@ -78,10 +70,10 @@ func (a Az) ValidVersion() error {
 	return nil
 }
 
-func (a Az) LoggedIn() (Account, error) {
+func (a Az) LoggedIn(accountName string) (Account, error) {
 	account := Account{}
 
-	output, err := a.cli.Execute([]string{"account", "show", "-s", a.account})
+	output, err := a.cli.Execute([]string{"account", "show", "-s", accountName})
 	if err != nil {
 		return account, errors.New("Please login to the azure-cli.")
 	}
@@ -99,10 +91,10 @@ func (a Az) GetSubscriptionAndTenantId(account Account) (string, string) {
 	return account.Id, account.TenantId
 }
 
-func (a Az) AppExists() error {
+func (a Az) AppExists(displayName string) error {
 	args := []string{
 		"ad", "app", "list",
-		"--display-name", a.displayName,
+		"--display-name", displayName,
 	}
 
 	output, err := a.cli.Execute(args)
@@ -117,10 +109,10 @@ func (a Az) AppExists() error {
 	}
 
 	if len(applications) > 0 {
-		return errors.New(fmt.Sprintf("The --display-name %s is taken by application with id %s.", a.displayName, applications[0].AppId))
+		return errors.New(fmt.Sprintf("The --display-name %s is taken by application with id %s.", displayName, applications[0].AppId))
 	}
 
-	a.logger.Println("Confirmed no application already exists with display name.")
+	a.logger.Println(fmt.Sprintf("Confirmed no application already exists with display name %s.", displayName))
 	return nil
 }
 
@@ -128,12 +120,12 @@ func (a Az) GeneratePassword() string {
 	return uuid.Must(uuid.NewRandom()).String()
 }
 
-func (a Az) CreateApplication(password string) (string, error) {
+func (a Az) CreateApplication(password, displayName, identifierUri string) (string, error) {
 	createArgs := []string{
 		"ad", "app", "create",
-		"--display-name", a.displayName,
-		"--homepage", a.identifierUri,
-		"--identifier-uris", a.identifierUri,
+		"--display-name", displayName,
+		"--homepage", identifierUri,
+		"--identifier-uris", identifierUri,
 	}
 
 	output, err := a.cli.Execute(append(createArgs, "--password", password))
@@ -182,7 +174,7 @@ func (a Az) AssignContributorRole(clientId string) error {
 	return nil
 }
 
-func (a *Az) WriteCredentials(id, tenantId, clientId, clientSecret string) error {
+func (a *Az) WriteCredentials(id, tenantId, clientId, clientSecret, credentialOutputFile string) error {
 	creds := fmt.Sprintf(`subscription_id = %s
 tenant_id = %s
 client_id = %s
@@ -193,11 +185,11 @@ client_secret = %s
 		clientId,
 		clientSecret)
 
-	err := ioutil.WriteFile(a.credentialOutputFile, []byte(creds), 0600)
+	err := ioutil.WriteFile(credentialOutputFile, []byte(creds), 0600)
 	if err != nil {
 		return errors.New(fmt.Sprintf("Writing credentials to output file: %s", err))
 	}
 
-	a.logger.Println(fmt.Sprintf("Wrote credentials to %s.", a.credentialOutputFile))
+	a.logger.Println(fmt.Sprintf("Wrote credentials to %s.", credentialOutputFile))
 	return nil
 }

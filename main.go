@@ -34,25 +34,25 @@ func main() {
 
 	cli := az.NewCLI(path)
 	logger := az.NewLogger(os.Stdout)
-	azure := az.NewAz(cli, logger, a.Account, a.DisplayName, a.IdentifierUri, a.CredentialOutputFile)
+	azure := az.NewAz(cli, logger)
 
 	err = azure.ValidVersion()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	account, err := azure.LoggedIn()
+	account, err := azure.LoggedIn(a.Account)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = azure.AppExists()
+	err = azure.AppExists(a.DisplayName)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	clientSecret := azure.GeneratePassword()
-	clientId, err := azure.CreateApplication(clientSecret)
+	clientId, err := azure.CreateApplication(clientSecret, a.DisplayName, a.IdentifierUri)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func main() {
 	}
 
 	id, tenantId := azure.GetSubscriptionAndTenantId(account)
-	err = azure.WriteCredentials(id, tenantId, clientId, clientSecret)
+	err = azure.WriteCredentials(id, tenantId, clientId, clientSecret, a.CredentialOutputFile)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -32,7 +32,7 @@ var _ = Describe("Az", func() {
 		identifierUri = "http://some-identifier-uri"
 		credentialOutputFile = "some-credential-file"
 
-		azure = az.NewAz(cli, logger, account, displayName, identifierUri, credentialOutputFile)
+		azure = az.NewAz(cli, logger)
 	})
 
 	Describe("ValidVersion", func() {
