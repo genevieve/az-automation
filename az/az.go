@@ -27,10 +27,7 @@ type ServicePrincipal struct {
 }
 
 type Az struct {
-	cli cli
-
-	creds credentials
-
+	cli                  cli
 	account              string
 	displayName          string
 	identifierUri        string
@@ -39,13 +36,6 @@ type Az struct {
 
 type cli interface {
 	Execute(args []string) (string, error)
-}
-
-type credentials struct {
-	SubscriptionId string
-	TenantId       string
-	ClientId       string
-	ClientSecret   string
 }
 
 func NewAz(cli cli, account, displayName, identifierUri, credentialOutputFile string) *Az {
@@ -58,7 +48,7 @@ func NewAz(cli cli, account, displayName, identifierUri, credentialOutputFile st
 	}
 }
 
-func (a *Az) ValidVersion() error {
+func (a Az) ValidVersion() error {
 	output, err := a.cli.Execute([]string{"-v"})
 	if err != nil {
 		return errors.New("Please install the azure-cli.")
@@ -81,50 +71,35 @@ func (a *Az) ValidVersion() error {
 	return nil
 }
 
-func (a *Az) LoggedIn() error {
-	output, err := a.cli.Execute([]string{"account", "list"})
-	if err != nil {
-		return errors.New("Please login in to the azure-cli.")
-	}
+func (a Az) LoggedIn() (Account, error) {
+	account := Account{}
 
-	accounts := []Account{}
-	err = json.Unmarshal([]byte(output), &accounts)
-	if err != nil {
-		return errors.New(fmt.Sprintf("Unmarshalling accounts json: %s", err))
-	}
-
-	if len(accounts) == 0 {
-		return errors.New("Login to the azure-cli (`az login`).")
-	}
-
-	return nil
-}
-
-func (a *Az) GetSubscriptionAndTenantId() error {
 	output, err := a.cli.Execute([]string{"account", "show", "-s", a.account})
 	if err != nil {
-		return err
+		return account, errors.New("Please login to the azure-cli.")
 	}
 
-	account := Account{}
 	err = json.Unmarshal([]byte(output), &account)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Unmarshalling account json: %s", err))
+		return account, errors.New(fmt.Sprintf("Unmarshalling account json: %s", err))
 	}
 
-	a.creds.SubscriptionId = account.Id
-	a.creds.TenantId = account.TenantId
-
-	return nil
+	return account, nil
 }
 
-func (a *Az) AppExists() error {
-	output, err := a.cli.Execute([]string{
+func (a Az) GetSubscriptionAndTenantId(account Account) (string, string) {
+	return account.Id, account.TenantId
+}
+
+func (a Az) AppExists() error {
+	args := []string{
 		"ad", "app", "list",
 		"--display-name", a.displayName,
-	})
+	}
+
+	output, err := a.cli.Execute(args)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Running `az ad app list`: %s", err))
+		return errors.New(fmt.Sprintf("Running %+v: %s", args, output))
 	}
 
 	applications := []Application{}
@@ -134,15 +109,17 @@ func (a *Az) AppExists() error {
 	}
 
 	if len(applications) > 0 {
-		return errors.New(fmt.Sprintf("The --display name %s is taken by application with id %s.", a.displayName, applications[0].AppId))
+		return errors.New(fmt.Sprintf("The --display-name %s is taken by application with id %s.", a.displayName, applications[0].AppId))
 	}
 
 	return nil
 }
 
-func (a *Az) CreateApplication() error {
-	a.creds.ClientSecret = uuid.Must(uuid.NewRandom()).String()
+func (a Az) GeneratePassword() string {
+	return uuid.Must(uuid.NewRandom()).String()
+}
 
+func (a Az) CreateApplication(password string) (string, error) {
 	createArgs := []string{
 		"ad", "app", "create",
 		"--display-name", a.displayName,
@@ -150,26 +127,24 @@ func (a *Az) CreateApplication() error {
 		"--identifier-uris", a.identifierUri,
 	}
 
-	output, err := a.cli.Execute(append(createArgs, "--password", a.creds.ClientSecret))
+	output, err := a.cli.Execute(append(createArgs, "--password", password))
 	if err != nil {
-		return errors.New(fmt.Sprintf("Running %+v: %s", createArgs, output))
+		return "", errors.New(fmt.Sprintf("Running %+v: %s", createArgs, output))
 	}
 
 	application := Application{}
 	err = json.Unmarshal([]byte(output), &application)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Unmarshalling application json: %s", err))
+		return "", errors.New(fmt.Sprintf("Unmarshalling application json: %s", err))
 	}
 
-	a.creds.ClientId = application.AppId
-
-	return nil
+	return application.AppId, nil
 }
 
-func (a *Az) CreateServicePrincipal() error {
+func (a Az) CreateServicePrincipal(clientId string) error {
 	createArgs := []string{
 		"ad", "sp", "create",
-		"--id", a.creds.ClientId,
+		"--id", clientId,
 	}
 
 	output, err := a.cli.Execute(createArgs)
@@ -180,11 +155,11 @@ func (a *Az) CreateServicePrincipal() error {
 	return nil
 }
 
-func (a *Az) AssignContributorRole() error {
+func (a Az) AssignContributorRole(clientId string) error {
 	args := []string{
 		"role", "assignment", "create",
 		"--role", "Contributor",
-		"--assignee", a.creds.ClientId,
+		"--assignee", clientId,
 	}
 
 	output, err := a.cli.Execute(args)
@@ -195,16 +170,16 @@ func (a *Az) AssignContributorRole() error {
 	return nil
 }
 
-func (a *Az) WriteCredentials() error {
+func (a *Az) WriteCredentials(id, tenantId, clientId, clientSecret string) error {
 	creds := fmt.Sprintf(`subscription_id = %s
 tenant_id = %s
 client_id = %s
 client_secret = %s
 `,
-		a.creds.SubscriptionId,
-		a.creds.TenantId,
-		a.creds.ClientId,
-		a.creds.ClientSecret)
+		id,
+		tenantId,
+		clientId,
+		clientSecret)
 
 	err := ioutil.WriteFile(a.credentialOutputFile, []byte(creds), 0600)
 	if err != nil {

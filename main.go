@@ -41,16 +41,13 @@ func main() {
 	}
 	log.Println("Checked version of azure-cli.")
 
-	err = cli.LoggedIn()
+	account, err := cli.LoggedIn()
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Checked you are logged in to azure-cli (`az`).")
 
-	err = cli.GetSubscriptionAndTenantId()
-	if err != nil {
-		log.Fatal(err)
-	}
+	id, tenantId := cli.GetSubscriptionAndTenantId(account)
 	log.Println("Retrieved subscription and tenant id.")
 
 	err = cli.AppExists()
@@ -59,28 +56,29 @@ func main() {
 	}
 	log.Println("Confirmed application name is not already taken.")
 
-	err = cli.CreateApplication()
+	clientSecret := cli.GeneratePassword()
+	clientId, err := cli.CreateApplication(clientSecret)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Created application.")
 
 	log.Println("Creating service principal.")
-	err = cli.CreateServicePrincipal()
+	err = cli.CreateServicePrincipal(clientId)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(30 * time.Second)
 	log.Println("Created service principal.")
 
-	err = cli.AssignContributorRole()
+	err = cli.AssignContributorRole(clientId)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Assigned contributor role to service principal.")
 
-	err = cli.WriteCredentials()
+	err = cli.WriteCredentials(id, tenantId, clientId, clientSecret)
 	if err != nil {
 		log.Fatal(err)
 	}

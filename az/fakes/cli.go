@@ -13,7 +13,7 @@ type CLI struct {
 	}
 }
 
-func (c CLI) Execute(args []string) (string, error) {
+func (c *CLI) Execute(args []string) (string, error) {
 	c.ExecuteCall.CallCount++
 	c.ExecuteCall.Receives.Args = args
 

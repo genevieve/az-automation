@@ -20,10 +20,12 @@ var _ = Describe("CLI", func() {
 		cli = az.NewCLI(path)
 	})
 
-	It("returns the output of the command it executed", func() {
-		output, err := cli.Execute([]string{"fake", "arg"})
-		Expect(err).NotTo(HaveOccurred())
+	Describe("Execute", func() {
+		It("returns the output of the command it executed", func() {
+			output, err := cli.Execute([]string{"fake", "arg"})
+			Expect(err).NotTo(HaveOccurred())
 
-		Expect(output).To(ContainSubstring("fake arg"))
+			Expect(output).To(ContainSubstring("fake arg"))
+		})
 	})
 })
