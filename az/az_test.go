@@ -17,6 +17,7 @@ var _ = Describe("Az", func() {
 		azure *az.Az
 
 		cli                  *fakes.CLI
+		logger               *fakes.Logger
 		account              string
 		displayName          string
 		identifierUri        string
@@ -25,12 +26,13 @@ var _ = Describe("Az", func() {
 
 	BeforeEach(func() {
 		cli = &fakes.CLI{}
+		logger = &fakes.Logger{}
 		account = "some-account"
 		displayName = "some-display-name"
 		identifierUri = "http://some-identifier-uri"
 		credentialOutputFile = "some-credential-file"
 
-		azure = az.NewAz(cli, account, displayName, identifierUri, credentialOutputFile)
+		azure = az.NewAz(cli, logger, account, displayName, identifierUri, credentialOutputFile)
 	})
 
 	Describe("ValidVersion", func() {
@@ -41,7 +43,9 @@ var _ = Describe("Az", func() {
 		It("checks the azure-cli is 2.0", func() {
 			err := azure.ValidVersion()
 			Expect(err).NotTo(HaveOccurred())
+
 			Expect(cli.ExecuteCall.Receives.Args).To(Equal([]string{"-v"}))
+			Expect(logger.PrintlnCall.Receives.Message).To(Equal("Checked version of azure-cli is above 2.0.0."))
 		})
 
 		Context("when this first execute call fails", func() {
@@ -91,6 +95,7 @@ var _ = Describe("Az", func() {
 			Expect(account.Name).To(Equal("some-account"))
 			Expect(account.Id).To(Equal("some-id"))
 			Expect(account.TenantId).To(Equal("some-tenant-id"))
+			Expect(logger.PrintlnCall.Receives.Message).To(Equal("Checked you are logged in to the azure-cli."))
 		})
 
 		Context("when the cli returns an error", func() {
@@ -141,6 +146,7 @@ var _ = Describe("Az", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(cli.ExecuteCall.Receives.Args).To(Equal([]string{"ad", "app", "list", "--display-name", "some-display-name"}))
+				Expect(logger.PrintlnCall.Receives.Message).To(Equal("Confirmed no application already exists with display name."))
 			})
 		})
 
@@ -197,6 +203,7 @@ var _ = Describe("Az", func() {
 				"--password", "the-client-secret",
 			}))
 			Expect(clientId).To(Equal("the-client-id"))
+			Expect(logger.PrintlnCall.Receives.Message).To(Equal("Created application."))
 		})
 
 		Context("when the cli returns an error", func() {
@@ -229,6 +236,7 @@ var _ = Describe("Az", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(cli.ExecuteCall.Receives.Args).To(Equal([]string{"ad", "sp", "create", "--id", "the-client-id"}))
+			Expect(logger.PrintlnCall.Receives.Message).To(Equal("Created service principal."))
 		})
 
 		Context("when the cli returns an error", func() {
@@ -251,6 +259,7 @@ var _ = Describe("Az", func() {
 			Expect(cli.ExecuteCall.Receives.Args).To(Equal([]string{"role", "assignment", "create",
 				"--role", "Contributor",
 				"--assignee", "the-client-id"}))
+			Expect(logger.PrintlnCall.Receives.Message).To(Equal("Assigned contributor role to service principal."))
 		})
 
 		Context("when the cli returns an error", func() {
@@ -281,6 +290,8 @@ var _ = Describe("Az", func() {
 			Expect(string(bytes)).To(ContainSubstring("tenant_id = tenant-id"))
 			Expect(string(bytes)).To(ContainSubstring("client_id = client-id"))
 			Expect(string(bytes)).To(ContainSubstring("client_secret = client-secret"))
+
+			Expect(logger.PrintlnCall.Receives.Message).To(Equal("Wrote credentials to some-credential-file."))
 		})
 	})
 })

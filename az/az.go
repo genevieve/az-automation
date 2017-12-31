@@ -28,6 +28,7 @@ type ServicePrincipal struct {
 
 type Az struct {
 	cli                  cli
+	logger               logger
 	account              string
 	displayName          string
 	identifierUri        string
@@ -38,9 +39,14 @@ type cli interface {
 	Execute(args []string) (string, error)
 }
 
-func NewAz(cli cli, account, displayName, identifierUri, credentialOutputFile string) *Az {
+type logger interface {
+	Println(message string)
+}
+
+func NewAz(cli cli, logger logger, account, displayName, identifierUri, credentialOutputFile string) *Az {
 	return &Az{
 		cli:                  cli,
+		logger:               logger,
 		account:              account,
 		displayName:          displayName,
 		identifierUri:        identifierUri,
@@ -68,6 +74,7 @@ func (a Az) ValidVersion() error {
 		return errors.New("Please update the azure-cli to at least 2.0.0.")
 	}
 
+	a.logger.Println("Checked version of azure-cli is above 2.0.0.")
 	return nil
 }
 
@@ -84,6 +91,7 @@ func (a Az) LoggedIn() (Account, error) {
 		return account, errors.New(fmt.Sprintf("Unmarshalling account json: %s", err))
 	}
 
+	a.logger.Println("Checked you are logged in to the azure-cli.")
 	return account, nil
 }
 
@@ -112,6 +120,7 @@ func (a Az) AppExists() error {
 		return errors.New(fmt.Sprintf("The --display-name %s is taken by application with id %s.", a.displayName, applications[0].AppId))
 	}
 
+	a.logger.Println("Confirmed no application already exists with display name.")
 	return nil
 }
 
@@ -138,6 +147,7 @@ func (a Az) CreateApplication(password string) (string, error) {
 		return "", errors.New(fmt.Sprintf("Unmarshalling application json: %s", err))
 	}
 
+	a.logger.Println("Created application.")
 	return application.AppId, nil
 }
 
@@ -152,6 +162,7 @@ func (a Az) CreateServicePrincipal(clientId string) error {
 		return errors.New(fmt.Sprintf("Running %+v: %s", createArgs, output))
 	}
 
+	a.logger.Println("Created service principal.")
 	return nil
 }
 
@@ -167,6 +178,7 @@ func (a Az) AssignContributorRole(clientId string) error {
 		return errors.New(fmt.Sprintf("Running %+v: %s", args, output))
 	}
 
+	a.logger.Println("Assigned contributor role to service principal.")
 	return nil
 }
 
@@ -186,5 +198,6 @@ client_secret = %s
 		return errors.New(fmt.Sprintf("Writing credentials to output file: %s", err))
 	}
 
+	a.logger.Println(fmt.Sprintf("Wrote credentials to %s.", a.credentialOutputFile))
 	return nil
 }
