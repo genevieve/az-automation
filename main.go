@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/genevievelesperance/az-automation/az"
 	flags "github.com/jessevdk/go-flags"
@@ -28,7 +29,7 @@ func main() {
 
 	path, err := exec.LookPath("az")
 	if err != nil {
-		log.Fatalf("Failed to find az (azure-cli): %s", err)
+		log.Fatalf("Failed to find the azure-cli (`az`): %s", err)
 	}
 
 	binary := az.NewCLI(path)
@@ -65,10 +66,13 @@ func main() {
 	}
 	log.Println("Created application.")
 
+	log.Println("Creating service principal.")
 	err = cli.CreateServicePrincipal()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	time.Sleep(10 * time.Second)
 	log.Println("Created service principal.")
 
 	err = cli.AssignContributorRole()

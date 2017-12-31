@@ -163,14 +163,14 @@ func (a *Az) CreateApplication() error {
 }
 
 func (a *Az) CreateServicePrincipal() error {
-	args := []string{
+	createArgs := []string{
 		"ad", "sp", "create",
 		"--id", a.creds.ClientId,
 	}
 
-	output, err := a.cli.Execute(args)
+	output, err := a.cli.Execute(createArgs)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Running %+v: %s", args, output))
+		return errors.New(fmt.Sprintf("Running %+v: %s", createArgs, output))
 	}
 
 	return nil
@@ -181,7 +181,6 @@ func (a *Az) AssignContributorRole() error {
 		"role", "assignment", "create",
 		"--role", "Contributor",
 		"--assignee", a.creds.ClientId,
-		"--scope", fmt.Sprintf("/subscriptions/%s", a.creds.SubscriptionId),
 	}
 
 	output, err := a.cli.Execute(args)
