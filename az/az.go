@@ -27,7 +27,7 @@ type ServicePrincipal struct {
 }
 
 type Az struct {
-	cli CLI
+	cli cli
 
 	creds credentials
 
@@ -37,6 +37,10 @@ type Az struct {
 	credentialOutputFile string
 }
 
+type cli interface {
+	Execute(args []string) (string, error)
+}
+
 type credentials struct {
 	SubscriptionId string
 	TenantId       string
@@ -44,7 +48,7 @@ type credentials struct {
 	ClientSecret   string
 }
 
-func NewAz(cli CLI, account, displayName, identifierUri, credentialOutputFile string) *Az {
+func NewAz(cli cli, account, displayName, identifierUri, credentialOutputFile string) *Az {
 	return &Az{
 		cli:                  cli,
 		account:              account,
@@ -65,13 +69,13 @@ func (a *Az) ValidVersion() error {
 
 	curr, err := semver.NewVersion(v)
 	if err != nil {
-		return errors.New("The azure-cli version (`az -v`) could not be parsed.")
+		return errors.New("The azure-cli version could not be parsed.")
 	}
 
 	min, _ := semver.NewVersion("2.0.0")
 
 	if curr.LessThan(min) {
-		return errors.New("Please update your azure-cli to at least 2.0.0.")
+		return errors.New("Please update the azure-cli to at least 2.0.0.")
 	}
 
 	return nil
