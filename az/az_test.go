@@ -88,13 +88,13 @@ var _ = Describe("Az", func() {
 		})
 
 		It("checks the user is logged in", func() {
-			account, err := azure.LoggedIn()
+			acc, err := azure.LoggedIn(account)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(cli.ExecuteCall.Receives.Args).To(Equal([]string{"account", "show", "-s", "some-account"}))
-			Expect(account.Name).To(Equal("some-account"))
-			Expect(account.Id).To(Equal("some-id"))
-			Expect(account.TenantId).To(Equal("some-tenant-id"))
+			Expect(acc.Name).To(Equal(account))
+			Expect(acc.Id).To(Equal("some-id"))
+			Expect(acc.TenantId).To(Equal("some-tenant-id"))
 			Expect(logger.PrintlnCall.Receives.Message).To(Equal("Checked you are logged in to the azure-cli."))
 		})
 
@@ -104,7 +104,7 @@ var _ = Describe("Az", func() {
 			})
 
 			It("checks the user is logged in", func() {
-				_, err := azure.LoggedIn()
+				_, err := azure.LoggedIn(account)
 				Expect(err).To(MatchError("Please login to the azure-cli."))
 			})
 		})
@@ -115,7 +115,7 @@ var _ = Describe("Az", func() {
 			})
 
 			It("returns a helpful error", func() {
-				_, err := azure.LoggedIn()
+				_, err := azure.LoggedIn(account)
 				Expect(err).To(MatchError(ContainSubstring("Unmarshalling account json: ")))
 			})
 		})
@@ -142,11 +142,11 @@ var _ = Describe("Az", func() {
 			})
 
 			It("returns no error", func() {
-				err := azure.AppExists()
+				err := azure.AppExists(displayName)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(cli.ExecuteCall.Receives.Args).To(Equal([]string{"ad", "app", "list", "--display-name", "some-display-name"}))
-				Expect(logger.PrintlnCall.Receives.Message).To(Equal("Confirmed no application already exists with display name."))
+				Expect(cli.ExecuteCall.Receives.Args).To(Equal([]string{"ad", "app", "list", "--display-name", displayName}))
+				Expect(logger.PrintlnCall.Receives.Message).To(Equal("Confirmed no application already exists with display name some-display-name."))
 			})
 		})
 
@@ -156,7 +156,7 @@ var _ = Describe("Az", func() {
 			})
 
 			It("returns a helpful error", func() {
-				err := azure.AppExists()
+				err := azure.AppExists(displayName)
 				Expect(err).To(MatchError("The --display-name some-display-name is taken by application with id 1234."))
 			})
 		})
@@ -168,7 +168,7 @@ var _ = Describe("Az", func() {
 			})
 
 			It("returns a helpful error", func() {
-				err := azure.AppExists()
+				err := azure.AppExists(displayName)
 				Expect(err).To(MatchError("Running [ad app list --display-name some-display-name]: the error message"))
 			})
 		})
@@ -179,7 +179,7 @@ var _ = Describe("Az", func() {
 			})
 
 			It("returns a helpful error", func() {
-				err := azure.AppExists()
+				err := azure.AppExists(displayName)
 				Expect(err).To(MatchError(ContainSubstring("Unmarshalling applications json: ")))
 			})
 		})
@@ -193,7 +193,7 @@ var _ = Describe("Az", func() {
 		})
 
 		It("returns the client id and client secret", func() {
-			clientId, err := azure.CreateApplication(clientSecret)
+			clientId, err := azure.CreateApplication(clientSecret, displayName, identifierUri)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(cli.ExecuteCall.Receives.Args).To(Equal([]string{"ad", "app", "create",
@@ -212,7 +212,7 @@ var _ = Describe("Az", func() {
 			})
 
 			It("returns a helpful error", func() {
-				_, err := azure.CreateApplication(clientSecret)
+				_, err := azure.CreateApplication(clientSecret, displayName, identifierUri)
 				Expect(err).To(MatchError(ContainSubstring("Running [ad app create --display-name some-display-name")))
 				Expect(err).NotTo(MatchError(ContainSubstring("--password the-client-secret")))
 			})
@@ -224,7 +224,7 @@ var _ = Describe("Az", func() {
 			})
 
 			It("returns a helpful error", func() {
-				_, err := azure.CreateApplication(clientSecret)
+				_, err := azure.CreateApplication(clientSecret, displayName, identifierUri)
 				Expect(err).To(MatchError(ContainSubstring("Unmarshalling application json: ")))
 			})
 		})
@@ -281,7 +281,7 @@ var _ = Describe("Az", func() {
 		})
 
 		It("writes the credentials to the specified output file", func() {
-			err := azure.WriteCredentials("subscription-id", "tenant-id", "client-id", "client-secret")
+			err := azure.WriteCredentials("subscription-id", "tenant-id", "client-id", "client-secret", credentialOutputFile)
 			Expect(err).NotTo(HaveOccurred())
 
 			bytes, err := ioutil.ReadFile(credentialOutputFile)
