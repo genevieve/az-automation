@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/genevievelesperance/az-automation/az"
-	"github.com/genevievelesperance/az-automation/az/fakes"
+	"github.com/genevieve/az-automation/az"
+	"github.com/genevieve/az-automation/az/fakes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

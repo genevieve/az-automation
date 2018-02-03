@@ -3,7 +3,7 @@ package az_test
 import (
 	"bytes"
 
-	"github.com/genevievelesperance/az-automation/az"
+	"github.com/genevieve/az-automation/az"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/genevievelesperance/az-automation/az"
+	"github.com/genevieve/az-automation/az"
 	flags "github.com/jessevdk/go-flags"
 )
 
