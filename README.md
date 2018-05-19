@@ -42,7 +42,7 @@ Steps:
 
     ```
     az-automation
-      --acount your-account-name \
+      --account your-account-name \
       --identifier-uri http://example.com \
       --display-name example-applicaion-name \
       --credential-output-file creds.tfvars
