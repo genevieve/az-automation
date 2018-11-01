@@ -175,10 +175,10 @@ func (a Az) AssignContributorRole(clientId string) error {
 }
 
 func (a *Az) WriteCredentials(id, tenantId, clientId, clientSecret, credentialOutputFile string) error {
-	creds := fmt.Sprintf(`subscription_id = %s
-tenant_id = %s
-client_id = %s
-client_secret = %s
+	creds := fmt.Sprintf(`subscription_id = "%s"
+tenant_id = "%s"
+client_id = "%s"
+client_secret = "%s"
 `,
 		id,
 		tenantId,
