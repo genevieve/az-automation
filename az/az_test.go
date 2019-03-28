@@ -286,10 +286,10 @@ var _ = Describe("Az", func() {
 
 			bytes, err := ioutil.ReadFile(credentialOutputFile)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(string(bytes)).To(ContainSubstring("subscription_id = subscription-id"))
-			Expect(string(bytes)).To(ContainSubstring("tenant_id = tenant-id"))
-			Expect(string(bytes)).To(ContainSubstring("client_id = client-id"))
-			Expect(string(bytes)).To(ContainSubstring("client_secret = client-secret"))
+			Expect(string(bytes)).To(ContainSubstring("subscription_id = \"subscription-id\""))
+			Expect(string(bytes)).To(ContainSubstring("tenant_id = \"tenant-id\""))
+			Expect(string(bytes)).To(ContainSubstring("client_id = \"client-id\""))
+			Expect(string(bytes)).To(ContainSubstring("client_secret = \"client-secret\""))
 
 			Expect(logger.PrintlnCall.Receives.Message).To(Equal("Wrote credentials to some-credential-file."))
 		})
