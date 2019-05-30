@@ -1,3 +1,7 @@
+# DEPRECATED
+**Follow the updated terraforming-azure docs to create a service
+principal.**
+
 # Create an azure automation account
 
 Requirements:
